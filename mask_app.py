@@ -6,9 +6,6 @@ import streamlit as st          # นำเข้า `streamlit` และตั
 from dotenv import load_dotenv          # นำเข้า `load_dotenv` เพื่ออ่านค่าคอนฟิกจากไฟล์ `.env`
 from sqlalchemy import create_engine        # นำเข้า `create_engine` เพื่อสร้างตัวเชื่อมต่อฐานข้อมูลผ่าน SQLAlchemy
 from streamlit.errors import StreamlitSecretNotFoundError       # นำเข้า exception นี้เพื่อรองรับกรณีที่แอปไม่มีการตั้งค่า `st.secrets`
-
-
-
 # ตั้งค่าพื้นฐานของหน้า Streamlit ก่อนเริ่มสร้างองค์ประกอบอื่นบนหน้าเว็บ
 st.set_page_config(
     # ชื่อที่จะแสดงบนแท็บของเบราว์เซอร์
@@ -132,14 +129,18 @@ def apply_data_masking(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # แสดงหัวข้อหลักของหน้า dashboard
+# ส่วนนี้คือชื่อใหญ่สุดของหน้าเว็บที่ผู้ใช้จะเห็นทันทีเมื่อเปิดแอป
 st.title("🏢 Sales Data Portal")
 # แสดงคำอธิบายสั้น ๆ ของระบบใต้หัวข้อหลัก
+# ใช้เพื่อบอกผู้ใช้ว่า dashboard นี้เน้นการวิเคราะห์และปฏิบัติการด้านยอดขาย
 st.markdown("ระบบศูนย์กลางข้อมูลสำหรับการวิเคราะห์และปฏิบัติการด้านยอดขาย")
 
 # โหลดข้อมูลยอดขายทั้งหมดจากฐานข้อมูล
+# ขั้นตอนนี้เป็นจุดเริ่มต้นของข้อมูลทั้งระบบ เพราะทุกแท็บจะอิงจาก DataFrame ตัวนี้
 df_sales_data = get_sales_data()
 
 # ถ้าข้อมูลว่าง ให้หยุดการทำงานทันทีเพื่อป้องกัน error ในส่วนถัดไป
+# การหยุดตรงนี้ช่วยป้องกันปัญหาเช่นเรียกคอลัมน์ที่ไม่มีอยู่ใน DataFrame ว่าง
 if df_sales_data.empty:
     st.stop()
 
@@ -182,6 +183,7 @@ quarantine_df = pd.DataFrame()
 
 
 # สร้างแท็บหลัก 6 แท็บ และเก็บออบเจ็กต์แท็บไว้ใช้งานต่อ
+# ลำดับของแท็บถูกออกแบบให้ไล่จากภาพรวม ไปจนถึงการสำรวจ ดาวน์โหลด ตรวจคุณภาพ และดูสถานะระบบ
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     # แท็บภาพรวมสำหรับผู้บริหาร
     "📊 Executive Overview",
@@ -309,6 +311,7 @@ with tab2:
     # แบ่งพื้นที่เป็น 2 คอลัมน์สำหรับตัวกรอง
     col_filter1, col_filter2 = st.columns(2)
     # เริ่มส่วนของตัวกรองฝั่งซ้าย
+    # ส่วนนี้ใช้คัดกรองตามรายชื่อลูกค้าที่ต้องการดู
     with col_filter1:
         # สร้าง multiselect สำหรับเลือกลูกค้าได้หลายราย
         selected_customers = st.multiselect(
@@ -320,6 +323,7 @@ with tab2:
             default=selected_customers,
         )
     # เริ่มส่วนของตัวกรองฝั่งขวา
+    # ส่วนนี้ใช้คัดกรองตามช่วงยอดขายเพื่อจำกัดขอบเขตข้อมูล
     with col_filter2:
         # สร้าง slider สำหรับกรองช่วงยอดขาย
         selected_sales_range = st.slider(
@@ -365,6 +369,7 @@ with tab2:
     # แสดงจำนวนข้อมูลที่พบหลังกรองเสร็จ
     st.caption(f"พบข้อมูล {len(filtered_df):,} รายการ")
     # แสดงตารางข้อมูลที่กรองแล้วในรูปแบบ masked data
+    # ผู้ใช้จึงยังสำรวจข้อมูลได้โดยไม่เห็นค่า PII แบบเต็ม
     st.dataframe(mask_filtered_df, use_container_width=True, hide_index=True)
 
 
@@ -387,6 +392,7 @@ with tab3:
 
 
     # ถ้ามีการเลือกคอลัมน์ ให้ส่งออกเฉพาะคอลัมน์นั้น ไม่เช่นนั้นใช้ข้อมูลที่ถูก mask ทั้งหมด
+    # จุดนี้ทำให้ไฟล์ที่ดาวน์โหลดออกไปยังคงปลอดภัยกว่าการปล่อยข้อมูลดิบตรง ๆ
     export_df = mask_filtered_df[export_columns] if export_columns else mask_filtered_df.copy()
     # แปลงข้อมูลที่ส่งออกเป็น CSV แบบ UTF-8 แล้วเก็บไว้ในตัวแปร `csv_data`
     csv_data = export_df.to_csv(index=False).encode('utf-8')
@@ -395,6 +401,7 @@ with tab3:
     # แสดง preview ของข้อมูลที่จะดาวน์โหลด
     st.dataframe(export_df, use_container_width=True, hide_index=True)
     # สร้างปุ่มดาวน์โหลดไฟล์ CSV
+    # เมื่อผู้ใช้กดปุ่ม Streamlit จะส่งข้อมูล CSV ที่เตรียมไว้ให้ดาวน์โหลดทันที
     st.download_button(
         # ข้อความบนปุ่มดาวน์โหลด
         "📥 Download Filtered Data (CSV)",
@@ -447,6 +454,7 @@ with tab4:
         report_df = filtered_df.sort_values("sales", ascending=False)[
             ["order_id", "customer_name", "sales"]
         ].head(20)
+        # หากรายงานนี้ยังมีชื่อลูกค้าอยู่ เราจะ mask ชื่อภายหลังในบล็อกตรวจคอลัมน์รวมด้านล่าง
     # ถ้าไม่ใช่สองกรณีด้านบน ให้ถือว่าเป็นรายงานการกระจายช่วงยอดขาย
     else:
         # แบ่งยอดขายออกเป็น bucket ตามช่วงที่กำหนด
@@ -472,6 +480,7 @@ with tab4:
         report_df.columns = ["sales_range", "order_count"]
 
     # แสดงตารางรายงานที่คำนวณเสร็จแล้ว
+    # ตารางนี้จะเปลี่ยนรูปแบบตาม report_type ที่ผู้ใช้เลือกใน selectbox ด้านบน
     st.dataframe(report_df, use_container_width=True, hide_index=True)
     # สร้างปุ่มสำหรับดาวน์โหลดรายงานเป็นไฟล์ CSV
     st.download_button(
@@ -499,6 +508,7 @@ with tab5:
     issues = []
 
     # วนตรวจข้อมูลทีละแถว
+    # ในแต่ละรอบจะประเมินว่าข้อมูลแถวนั้นมีปัญหาคุณภาพหรือไม่
     for _, row in df_qc.iterrows():
         # เตรียมค่า phone แบบตัดช่องว่าง ถ้าไม่มีค่าให้เป็นสตริงว่าง
         phone_value = str(row["phone"]).strip() if pd.notna(row["phone"]) else ""
@@ -605,6 +615,7 @@ with tab6:
     st.divider()
 
     # ถ้าไม่มีข้อมูลเสียเลยให้ถือว่าระบบ healthy ไม่เช่นนั้นให้เป็น warning
+    # เราใช้เงื่อนไขง่าย ๆ จากจำนวนข้อมูลใน quarantine เป็นตัวชี้วัดภาพรวมของ pipeline
     pipeline_status = "healthy" if quarantine_count == 0 else "warning"
     # แสดงหัวข้อส่วนสถานะของ pipeline
     st.write("Pipeline Status:")
