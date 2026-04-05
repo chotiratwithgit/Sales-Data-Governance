@@ -2,6 +2,10 @@
 
 แดชบอร์ดตัวอย่างสำหรับงาน Data Governance และการปกปิดข้อมูลส่วนบุคคล (PDPA) บนข้อมูลยอดขาย โดยใช้ `Streamlit` เป็นหน้าบ้าน และ `Supabase PostgreSQL` เป็นแหล่งข้อมูลหลัก
 
+## Live App
+
+Streamlit Cloud: https://sales-data-governance-7awi3zwxnnbnvpjfwwgc5p.streamlit.app/
+
 โปรเจ็กต์นี้มี 2 ส่วนหลัก:
 
 - `mask_app.py` สำหรับแสดงผล dashboard, filtering, reporting, data quality และ pipeline health
