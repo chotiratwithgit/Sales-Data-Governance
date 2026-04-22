@@ -5,7 +5,7 @@ import random
 from dotenv import load_dotenv
 from faker import Faker
 
-# 1. โหลดกุญแจเข้าบ้าน
+# 1. ทำกุญแจสำหรับการเข้าถึงข้อมูล
 load_dotenv()
 url = os.environ.get("SUPABASE_DB_URL")
 key = os.environ.get("SUPABASE_KEY")
